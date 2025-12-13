@@ -19,6 +19,7 @@ afterAll(async () => {
     await mongoose.connection.close();
 });
 
+// --- REGISTER TESTS ---
 describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
         const res = await request(app)
@@ -51,5 +52,50 @@ describe('POST /api/auth/register', () => {
 
         expect(res.statusCode).toEqual(400);
         expect(res.body).toHaveProperty('message', 'User already exists');
+    });
+});
+
+// --- NEW LOGIN TESTS (Add this part) ---
+describe('POST /api/auth/login', () => {
+    it('should login successfully with valid credentials', async () => {
+        // 1. Register a user first
+        await request(app)
+            .post('/api/auth/register')
+            .send({
+                email: 'login@example.com',
+                password: 'password123'
+            });
+
+        // 2. Try to login
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'login@example.com',
+                password: 'password123'
+            });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toHaveProperty('token'); // Ensure we get a JWT
+    });
+
+    it('should reject login with incorrect password', async () => {
+        // 1. Register a user
+        await request(app)
+            .post('/api/auth/register')
+            .send({
+                email: 'wrongpass@example.com',
+                password: 'password123'
+            });
+
+        // 2. Try to login with wrong password
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'wrongpass@example.com',
+                password: 'wrongpassword'
+            });
+
+        expect(res.statusCode).toEqual(401);
+        expect(res.body).toHaveProperty('message', 'Invalid credentials');
     });
 });
