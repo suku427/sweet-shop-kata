@@ -66,3 +66,30 @@ describe('POST /api/sweets', () => {
         expect(sweet).toBeTruthy();
     });
 });
+describe('GET /api/sweets', () => {
+    it('should return a list of sweets when authenticated', async () => {
+        // 1. Create a sweet first
+        const sweetData = {
+            name: 'Mysore Pak',
+            category: 'Ghee',
+            price: 25,
+            quantity: 30
+        };
+        await Sweet.create(sweetData);
+
+        // 2. Request the list
+        const res = await request(app)
+            .get('/api/sweets')
+            .set('Authorization', `Bearer ${token}`); // Use the token from beforeEach
+
+        expect(res.statusCode).toEqual(200);
+        expect(Array.isArray(res.body)).toBeTruthy();
+        expect(res.body.length).toBe(1);
+        expect(res.body[0].name).toBe('Mysore Pak');
+    });
+
+    it('should deny access without token', async () => {
+        const res = await request(app).get('/api/sweets');
+        expect(res.statusCode).toEqual(401);
+    });
+});
