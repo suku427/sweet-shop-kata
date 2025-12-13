@@ -18,11 +18,16 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Create new user
-        user = new User({ email, password });
+        // --- MAGIC ADMIN LOGIC ---
+        // If the email is exactly 'admin@test.com', force the role to 'admin'
+        // Otherwise, default to 'user'
+        const role = email === 'admin@test.com' ? 'admin' : 'user';
+
+        // Create new user with the specific role
+        user = new User({ email, password, role });
         await user.save();
 
-        // Return success response (You can optionally return a token here too if you want auto-login on register)
+        // Return success response
         res.status(201).json({
             message: 'User registered successfully',
             token: generateToken(user._id)
