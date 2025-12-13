@@ -145,3 +145,33 @@ describe('DELETE /api/sweets/:id', () => {
         expect(check).toBeNull();
     });
 });
+
+describe('GET /api/sweets/search', () => {
+    beforeEach(async () => {
+        // Seed some data for search
+        await Sweet.create([
+            { name: 'Rasmalai', category: 'Milk', price: 40, quantity: 10 },
+            { name: 'Jalebi', category: 'Syrup', price: 20, quantity: 20 },
+            { name: 'Barfi', category: 'Milk', price: 30, quantity: 15 }
+        ]);
+    });
+
+    it('should search sweets by name', async () => {
+        const res = await request(app)
+            .get('/api/sweets/search?query=Rasmalai')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.length).toBe(1);
+        expect(res.body[0].name).toBe('Rasmalai');
+    });
+
+    it('should search sweets by category', async () => {
+        const res = await request(app)
+            .get('/api/sweets/search?query=Milk')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.length).toBe(2); // Rasmalai and Barfi
+    });
+});

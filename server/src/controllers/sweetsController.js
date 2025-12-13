@@ -41,3 +41,23 @@ exports.deleteSweet = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+exports.searchSweets = async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        // Create a case-insensitive regex
+        const searchRegex = new RegExp(query, 'i');
+
+        const sweets = await Sweet.find({
+            $or: [
+                { name: searchRegex },
+                { category: searchRegex }
+            ]
+        });
+
+        res.status(200).json(sweets);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
