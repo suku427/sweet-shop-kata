@@ -93,3 +93,55 @@ describe('GET /api/sweets', () => {
         expect(res.statusCode).toEqual(401);
     });
 });
+
+describe('DELETE /api/sweets/:id', () => {
+    let sweetId;
+
+    // Create a sweet to delete
+    beforeEach(async () => {
+        const sweet = await Sweet.create({
+            name: 'Rasgulla',
+            category: 'Syrup',
+            price: 15,
+            quantity: 20
+        });
+        sweetId = sweet._id;
+    });
+
+    it('should not allow non-admin users to delete sweets', async () => {
+        // We use the 'token' variable from the top of the file, which belongs to a default user (default role is 'user')
+        const res = await request(app)
+            .delete(`/api/sweets/${sweetId}`)
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(403); // Forbidden
+    });
+
+    it('should allow admin users to delete sweets', async () => {
+        // 1. Create an Admin User
+        await User.create({
+            email: 'admin_real@example.com',
+            password: 'password123',
+            role: 'admin' // Force role to admin
+        });
+
+        // 2. Login as Admin to get token
+        const loginRes = await request(app).post('/api/auth/login').send({
+            email: 'admin_real@example.com',
+            password: 'password123'
+        });
+        const adminToken = loginRes.body.token;
+
+        // 3. Delete
+        const res = await request(app)
+            .delete(`/api/sweets/${sweetId}`)
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toHaveProperty('message', 'Sweet deleted successfully');
+
+        // 4. Verify it's gone
+        const check = await Sweet.findById(sweetId);
+        expect(check).toBeNull();
+    });
+});
